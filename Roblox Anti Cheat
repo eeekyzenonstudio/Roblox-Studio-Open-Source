@@ -1,1 +1,43 @@
+--[[
 
+-- HOW TO SET UP ANTI-CHEAT (quick)
+-- 1) Place this script in ServerScriptService (server-side only).
+-- 2) Enable HttpService in Game Settings (Home > Game Settings > Security > Enable Http Requests).
+-- 3) Create a Discord webhook and paste the URL into `webhookURL` variable.
+-- 4) Put any client-request RemoteEvents in ReplicatedStorage (if you have teleport UI or similar).
+-- 5) Only ACCEPT client requests on the server after validation (see RemoteEvent example).
+-- 6) Test locally first: run in Play > Start Server + x Clients to simulate multiple players.
+-- 7) Tune config: set maxspeed, maxtp, maxjump, flag counts to match your game's movement.
+-- 8) Use Studio > Network emulation to test high-latency/fake-lag behavior and adjust flagResetTime.
+-- 9) If you have vehicles/trains, SetNetworkOwner(nil) on important parts so server controls physics.
+-- 10) Monitor webhook logs and adjust thresholds to reduce false positives.
+
+
+-- RemoteEvent: TeleportRequest in ReplicatedStorage
+-- Client fires: TeleportRequest:FireServer(Vector3)
+-- Server should validate before teleporting:
+-- TeleportRequest.OnServerEvent:Connect(function(player, requestedPos)
+--     if typeof(requestedPos) ~= "Vector3" then return end
+--     local d = playerData[player.UserId]
+--     if not d or not d.lastPos then return end
+--     if (requestedPos - d.lastPos).Magnitude > config.maxtp then
+--         MadeBySeanZeCat(player, "Attempted Remote teleport", {Requested = requestedPos})
+--         return
+--     end
+--     -- server does the teleport
+--     player.Character.HumanoidRootPart.CFrame = CFrame.new(requestedPos)
+-- end)
+
+-- WHAT TO AVOID
+-- 1) Don't trust client values (Humanoid.WalkSpeed from client, _G flags, or client timestamps).
+-- 2) Don't run important checks only on LocalScripts — always do them server-side.
+-- 3) Don't call HttpService.PostAsync every frame — use one-time send or rate-limit (you already do).
+-- 4) Don't keep webhook URL exposed in public repos. Treat like secret.
+-- 5) Avoid very low thresholds (e.g., maxspeed too low) — causes false positives on lag.
+-- 6) Avoid heavy operations inside Heartbeat (long loops, raycasts per player at high frequency) — keep performance in mind.
+-- 7) Don't kick players in Studio tests (wrap kicks in pcall and optionally disable autoKick while testing).
+-- 8) Don't persist reported flags to DataStore without rate-limiting (DataStore quotas).
+-- 9) Don't rely on single-frame deltas (use dt cap / moving average / hrp.Velocity for robustness).
+-- 10) Don't trust "client says ok" for sensitive actions (give server authority for rewards, teleport, speed changes).
+
+]]
